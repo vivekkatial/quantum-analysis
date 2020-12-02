@@ -1,3 +1,2 @@
 mlflow:
   tracking_server_uri: "http://115.146.95.176:5000/"
-  experiment_name: "three-sat-usa-qaoa"
