@@ -27,7 +27,6 @@ def main():
     with open("config/mlflow-tracking-server.yml") as file:
         mlflow_config = yaml.load(file, Loader=yaml.FullLoader)
 
-
     # Connect to mlflow
     logging.info(
         'Connecting to MLFlow Tracking Server at URI: "%s" on Experiment:"%s"'
@@ -40,10 +39,13 @@ def main():
     experiment = mlflow.get_experiment_by_name(experiment_name)
 
     logging.info("Downloading data from Experiment")
-    d_results = mlflow.search_runs(experiment_ids=experiment.experiment_id, run_view_type=1)
+    d_results = mlflow.search_runs(
+        experiment_ids=experiment.experiment_id, run_view_type=1
+    )
     d_results_filename = "data/d_%s.csv" % experiment_name
     d_results.to_csv(d_results_filename, index=False)
     logging.info('Writing runs data to "%s"' % d_results_filename)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

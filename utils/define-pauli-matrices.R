@@ -8,9 +8,7 @@
 
 # Define Base Matrices ----------------------------------------------------
 
-X = matrix(c(0,1,1,0),    nrow = 2, ncol = 2)
-Y = matrix(c(0,-1i,1i,0), nrow = 2, ncol = 2)
-Z = matrix(c(1,0,0,-1),   nrow = 2, ncol = 2)
-I = matrix(c(1,0,0,1),    nrow = 2, ncol = 2)
-
-
+X = matrix(c(0, 1, 1, 0),    nrow = 2, ncol = 2)
+Y = matrix(c(0, -1i, 1i, 0), nrow = 2, ncol = 2)
+Z = matrix(c(1, 0, 0, -1),   nrow = 2, ncol = 2)
+I = matrix(c(1, 0, 0, 1),    nrow = 2, ncol = 2)

@@ -1,2 +1,2 @@
 mlflow:
-  tracking_server_uri: "http://115.146.95.176:5000/"
+  tracking_server_uri: "http://45.113.234.250:5000/"
