@@ -22,46 +22,34 @@ metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_lay
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2021-04-15 06:13:49", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2021-04-17 05:00:00", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vrp-qaoa.csv") %>% 
   filter(
     status == "FINISHED", 
-    !is.na(metrics.instance_p_success), 
-    start_time > RUN_DATETIME
-    )
+    start_time > RUN_DATETIME,
+    !is.na(metrics.layer_4_quantum_burden)
+    ) %>% 
+  select(run_id, starts_with("metrics.layer_"), feature_vector)
+
 
 d_matilda <- d_runs %>% 
-  select(run_id, feature_vector, metrics) %>% 
+  select(run_id, feature_vector, starts_with("metrics.layer_")) %>% 
   rename(
     Source = params.source,
     Instances = run_id
     ) %>% 
   rename_at(vars(starts_with("params.")), list( ~ str_replace(., "params.", "feature_"))) %>% 
+  rename_at(vars(starts_with("metrics.layer_")), list( ~ str_replace(., "metrics.layer_", "algo_layer_"))) %>% 
   select(
     Instances,
     Source,
     contains("feature_"),
-    algo_optimal_value = metrics.m_optimal_value,
-    algo_p_success = metrics.m_p_success,
-    algo_num_layers = metrics.m_num_layers
+    contains("algo")
   ) %>% 
   mutate_if(is.logical, as.numeric) %>% 
-  filter(
-    !is.na(algo_optimal_value),
-    !is.na(algo_p_success),
-    !is.na(algo_num_layers)
-    ) %>% 
-  ## AQTED FILTERS
-  filter(
-    feature_number_of_vertices == 7
-  ) %>% 
-  select_if(~n_distinct(.) > 1) %>% 
-  select(-algo_optimal_value, -algo_p_success)
-
-  
-
+  select_if(~n_distinct(.) > 1)
 
 # Test no missing values
 testthat::expect_equal(d_matilda %>%
@@ -90,3 +78,6 @@ testthat::expect_gt(d_matilda %>%
 
 d_matilda %>% 
   write_csv("data/d_matilda.csv")
+
+d_matilda %>% 
+  view()
