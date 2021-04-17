@@ -18,14 +18,22 @@ feature_vector <- c("params.radius", "params.q_p", "params.vertex_connectivity",
   "params.bipartite", "params.diameter", "params.regular","params.source"
 )
 
-metrics <- c("metrics.m_optimal_value","metrics.m_p_success")
+metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_layers")
 
-RUN_DATE <- as.Date("2021-04-13")
+Sys.time()
 
+RUN_DATETIME <- as.POSIXct("2021-04-15 06:13:49", tz = "UTC")
+
+# Adding stuff for QAOA
 d_runs <- read_csv("data/d_vrp-qaoa.csv") %>% 
-  filter(status == "FINISHED", start_time >= RUN_DATE)
+  filter(
+    status == "FINISHED", 
+    !is.na(metrics.instance_p_success), 
+    start_time > RUN_DATETIME
+    )
+
 d_matilda <- d_runs %>% 
-  select(run_id, feature_vector) %>% 
+  select(run_id, feature_vector, metrics) %>% 
   rename(
     Source = params.source,
     Instances = run_id
@@ -35,11 +43,23 @@ d_matilda <- d_runs %>%
     Instances,
     Source,
     contains("feature_"),
-    algo_p_success = metrics.m_p_success
+    algo_optimal_value = metrics.m_optimal_value,
+    algo_p_success = metrics.m_p_success,
+    algo_num_layers = metrics.m_num_layers
   ) %>% 
   mutate_if(is.logical, as.numeric) %>% 
-  filter(!is.na(algo_p_success)) %>% 
-  select_if(~n_distinct(.) > 1)
+  filter(
+    !is.na(algo_optimal_value),
+    !is.na(algo_p_success),
+    !is.na(algo_num_layers)
+    ) %>% 
+  ## AQTED FILTERS
+  filter(
+    feature_number_of_vertices == 7
+  ) %>% 
+  select_if(~n_distinct(.) > 1) %>% 
+  select(-algo_optimal_value, -algo_p_success)
+
   
 
 
