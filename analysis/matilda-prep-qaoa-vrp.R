@@ -7,13 +7,13 @@
 
 library(tidyverse)
 
-feature_vector <- c("params.radius", "params.q_p", "params.vertex_connectivity", 
-  "params.number_of_vertices", "params.edge_connectivity", "params.algebraic_connectivity", 
+feature_vector <- c("params.radius", "params.q_p", 
+  "params.number_of_vertices", "params.algebraic_connectivity", 
   "params.eulerian", "params.planar", "params.average_distance", 
   "params.density", "params.acyclic", "params.num_vehicles", "params.connected", 
   "params.q_n_max", "params.minimum_degree", "params.second_largest_eigenvalue", 
   "params.q_threshold", "params.minimum_dominating_set", "params.clique_number", 
-  "params.maximum_degree", "params.number_of_edges", "params.laplacian_largest_eigenvalue", 
+  "params.maximum_degree", "params.laplacian_largest_eigenvalue", 
   "params.smallest_eigenvalue", "params.source", "params.number_of_components", 
   "params.bipartite", "params.diameter", "params.regular","params.source"
 )

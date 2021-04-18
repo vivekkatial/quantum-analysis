@@ -54,6 +54,7 @@ if __name__ == "__main__":
         "energy": None,
         "qubo_ind": None,
         "instance": None,
+        "restart": None
     }
 
     evolution_data = []
@@ -63,15 +64,20 @@ if __name__ == "__main__":
         evolution_data_row_item["instance"] = instance_id
         evolution_data_row_item["qubo_ind"] = i
 
-        for layer in qubo["evolution"]:
+        restart = 0
+        for k,layer in enumerate(qubo["evolution"]):
             evolution_data_row_item["layer"] = layer["p"]
             evolution_data_row_item["p_success"] = layer["probability_success"]
-
+ 
+            if k % 10 == 0:
+                restart += 1
             for state in layer["state"].items():
                 val = deepcopy(state)
                 evolution_data_row_item["state"] = val[0]
                 evolution_data_row_item["probability"] = val[1]["probability"]
                 evolution_data_row_item["energy"] = val[1]["energy"]
+                evolution_data_row_item["restart"] = restart
+
 
                 new_dict = evolution_data_row_item.copy()
                 evolution_data.append(new_dict)
