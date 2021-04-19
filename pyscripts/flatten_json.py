@@ -39,10 +39,10 @@ def flatten_json_iterative_solution(dictionary):
 
 if __name__ == "__main__":
 
-    instance_id = "instanceType_complete_numNodes_5_numVehicles_2_40cb9d5ac9844c928755ab400b2ef060"
+    instance_id = "data/7-node-example.json"
 
     with open(
-        'data/instanceType_complete_numNodes_5_numVehicles_2_40cb9d5ac9844c928755ab400b2ef060.json_solution.json'
+        instance_id
     ) as file:
         data = json.load(file)
 
