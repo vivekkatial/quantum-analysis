@@ -22,16 +22,16 @@ metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_lay
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2021-04-18 07:00:00", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2021-07-05 07:00:00", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vrp-qaoa.csv") %>% 
   filter(
     status == "FINISHED", 
-    params.instance_uuid == "example-graph-reduced-costs.json",
+    start_time > RUN_DATETIME,
     !is.na(metrics.layer_4_quantum_burden)
     ) %>% 
-  select(run_id, starts_with("metrics.layer_"), feature_vector)
+  select(run_id, starts_with("metrics.layer_"), feature_vector, starts_with("params.tsp_"))
 
 
 d_runs %>% 
@@ -39,14 +39,14 @@ d_runs %>%
   gather(layer, burden, -run_id) %>% 
   mutate(layer = str_remove_all(layer, "metrics.layer_|_quantum_burden") %>% as.numeric()) %>% 
   arrange(burden) %>% 
-  filter(run_id == "958af6b6620c44ccbbca0e54ead08163", layer <= 13) %>%  
+  filter(run_id == d_runs$run_id[[2]], layer <= 13) %>%  
   ggplot(aes(x = layer, y = burden, group=run_id)) + 
   geom_line(alpha = 0.3) + 
   theme_light()
 
 
 d_matilda <- d_runs %>% 
-  select(run_id, feature_vector, starts_with("metrics.layer_")) %>% 
+  select(run_id, feature_vector, starts_with("params.tsp"), starts_with("metrics.layer_")) %>% 
   rename(
     Source = params.source,
     Instances = run_id

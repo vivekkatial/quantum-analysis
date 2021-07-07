@@ -39,7 +39,7 @@ def flatten_json_iterative_solution(dictionary):
 
 if __name__ == "__main__":
 
-    instance_id = "data/7-node-example.json"
+    instance_id = "data/8-node-example.json"
 
     with open(
         instance_id

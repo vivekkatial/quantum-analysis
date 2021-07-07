@@ -46,7 +46,7 @@ d_probs %>%
   group_by(layer, qubo_ind) %>% 
   mutate(mean_prob = mean(p_success, na.rm = T)) %>% 
   ungroup() %>% 
-  filter(layer < 10) %>% 
+  filter(layer <= 9) %>% 
   mutate(subtour = paste0("Subtour: ", qubo_ind+1)) %>% 
   ggplot(aes(x = layer, y = p_success, group = restart)) + 
   geom_line(alpha = 0.3, aes(col = restart)) + 
@@ -62,17 +62,17 @@ d_probs %>%
   facet_wrap(~subtour, ncol = 1, scales = "free")
 
 d_probs %>% 
-  filter(qubo_ind == 0, restart == 1, layer %in% c(1,5,10)) %>% 
+  filter(qubo_ind == 2, restart == 1, layer %in% c(1,5,10)) %>% 
   arrange(probability) %>%
   mutate(state = str_replace(state, "\\[", "\\|")) %>% 
   mutate(state = str_replace(state, "\\]", "\\>")) %>% 
   ggplot(aes(x = reorder(state, -probability), y = probability)) + 
   geom_bar(stat="identity", na.rm = TRUE)+
-  geom_hline(yintercept = 1/16, color="red") + 
+  geom_hline(yintercept = 1/512, color="red") + 
   facet_wrap(~layer, ncol =1, drop = TRUE) +
   theme_light() + 
   theme(
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+    axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   ) +
   labs(
