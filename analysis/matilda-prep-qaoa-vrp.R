@@ -11,7 +11,7 @@ feature_vector <- c("params.radius", "params.q_p",
   "params.number_of_vertices", "params.algebraic_connectivity", 
   "params.eulerian", "params.planar", "params.average_distance", 
   "params.density", "params.acyclic", "params.num_vehicles", "params.connected", 
-  "params.q_n_max", "params.minimum_degree", "params.second_largest_eigenvalue", 
+  "params.q_n_max", "params.minimum_degree", 
   "params.q_threshold", "params.minimum_dominating_set", "params.clique_number", 
   "params.maximum_degree", "params.laplacian_largest_eigenvalue", 
   "params.smallest_eigenvalue", "params.source", "params.number_of_components", 
@@ -22,7 +22,7 @@ metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_lay
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2021-07-11 07:00:00", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2021-07-19 07:00:00", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vrp-qaoa.csv") %>% 
@@ -31,22 +31,26 @@ d_runs <- read_csv("data/d_vrp-qaoa.csv") %>%
     start_time > RUN_DATETIME,
     !is.na(metrics.layer_4_quantum_burden)
     ) %>% 
-  select(run_id, starts_with("metrics.layer_"), feature_vector, starts_with("params.tsp_"))
+  select(run_id, starts_with("metrics.layer_"), starts_with("params.tsp_"), "params.source")
 
 
 d_runs %>% 
-  select(run_id, starts_with("metrics.layer_")) %>% 
-  gather(layer, burden, -run_id) %>% 
+  select(run_id, starts_with("metrics.layer_"), source=params.source) %>% 
+  gather(layer, burden, -run_id, -source) %>% 
   mutate(layer = str_remove_all(layer, "metrics.layer_|_quantum_burden") %>% as.numeric()) %>% 
   arrange(burden) %>% 
-  filter(run_id == d_runs$run_id[[2]], layer <= 13) %>%  
-  ggplot(aes(x = layer, y = burden, group=run_id)) + 
+  group_by(layer, source) %>% 
+  summarise(burden = mean(burden)) %>% 
+  filter(layer < 4) %>% 
+  ggplot(aes(x = layer, y = 1/burden)) + 
   geom_line(alpha = 0.3) + 
-  theme_light()
+  theme_light() + 
+  facet_wrap(~source)+
+  labs(y = "prob")
 
 
 d_matilda <- d_runs %>% 
-  select(run_id, feature_vector, starts_with("params.tsp"), starts_with("metrics.layer_")) %>% 
+  select(run_id, starts_with("params.tsp"), starts_with("metrics.layer_"), params.source) %>% 
   rename(
     Source = params.source,
     Instances = run_id
@@ -88,7 +92,6 @@ testthat::expect_gt(d_matilda %>%
                     1)
 
 d_matilda %>% 
-  select(-feature_radius, -feature_tsp_symmetric) %>% 
   write_csv("data/d_matilda.csv")
 
 d_matilda %>% 
