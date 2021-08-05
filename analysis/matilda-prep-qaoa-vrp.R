@@ -22,7 +22,7 @@ metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_lay
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2021-07-05 07:00:00", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2021-07-11 07:00:00", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vrp-qaoa.csv") %>% 
@@ -88,7 +88,9 @@ testthat::expect_gt(d_matilda %>%
                     1)
 
 d_matilda %>% 
+  select(-feature_radius, -feature_tsp_symmetric) %>% 
   write_csv("data/d_matilda.csv")
 
 d_matilda %>% 
-  view()
+  select(Instances, Source, contains("feature_tsp"), contains("algo")) %>% 
+  count(Source)
