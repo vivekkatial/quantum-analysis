@@ -8,7 +8,7 @@
 
 #export AQC_EXPERIMENT="three-sat-usa-inc-gs"
 # export QAOA_EXPERIMENT="three-sat-usa-qaoa"
-export QAOA_VRP_EXPERIMENT="vrp-qaoa"
+export QAOA_VRP_EXPERIMENT="vqe-maxcut"
 
 # Activate venv
 pipenv shell
