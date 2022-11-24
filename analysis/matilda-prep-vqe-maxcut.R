@@ -10,7 +10,7 @@ library(glue)
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2022-11-21 17:45:00 AEDT", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2022-11-23 11:45:00 AEDT", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vqe-maxcut.csv") %>% 
@@ -20,7 +20,7 @@ d_runs <- read_csv("data/d_vqe-maxcut.csv") %>%
     )
 
 
-instance_classes <- c("uniform_random", "watts_strogatz_small_world", "power_law_tree", "geometric", "nearly_complete_bi_partite")
+instance_classes <- c("uniform_random", "watts_strogatz_small_world", "power_law_tree", "geometric", "nearly_complete_bi_partite", "regular_graph")
 
 d_matilda <- map_df(instance_classes, function(instance_class){
   d_runs %>% 
