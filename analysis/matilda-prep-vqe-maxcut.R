@@ -8,22 +8,9 @@
 library(tidyverse)
 library(glue)
 
-feature_vector <- c("params.radius", "params.q_p", 
-  "params.number_of_vertices", "params.algebraic_connectivity", 
-  "params.eulerian", "params.planar", "params.average_distance", 
-  "params.density", "params.acyclic", "params.num_vehicles", "params.connected", 
-  "params.q_n_max", "params.minimum_degree", 
-  "params.q_threshold", "params.minimum_dominating_set", "params.clique_number", 
-  "params.maximum_degree", "params.laplacian_largest_eigenvalue", 
-  "params.smallest_eigenvalue", "params.source", "params.number_of_components", 
-  "params.bipartite", "params.diameter", "params.regular","params.source"
-)
-
-metrics <- c("metrics.m_optimal_value","metrics.m_p_success", "metrics.m_num_layers")
-
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2022-10-18 22:45:00 AEDT", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2022-11-21 17:45:00 AEDT", tz = "UTC")
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_vqe-maxcut.csv") %>% 
@@ -49,11 +36,18 @@ d_matilda <- map_df(instance_classes, function(instance_class){
     ) %>% 
     mutate_if(is.logical, as.numeric) %>% 
     select_if(~n_distinct(.) > 1) %>% 
+    select(-contains("feature_acyclic")) %>% 
+    select(-contains("feature_number_of_vertices")) %>%
     drop_na() %>% 
     mutate(Source = instance_class) %>% 
     select(Instances, Source, energy_gap, starts_with("feature"))
 }) %>% 
+  filter(feature_laplacian_second_largest_eigenvalue > 0) %>% 
+  select(-c("feature_eulerian","feature_bipartite","feature_regular")) %>% 
   drop_na()
+
+d_matilda %>% 
+  count(Source)
 
 # Test no missing values
 testthat::expect_equal(d_matilda %>%
@@ -90,4 +84,39 @@ d_matilda %>%
   count(Source)
 
 
-qplot(d_matilda$energy_gap)
+d_matilda %>% 
+  filter(Source == "geometric") %>% 
+  ggplot(aes(x = feature_density)) +
+  geom_histogram()
+
+d_matilda %>% 
+  filter(str_detect(Instances, "3b75")) %>% 
+  filter(Source == "nearly_complete_bi_partite") %>% 
+  gather(var, val) %>% 
+  View()
+
+
+
+
+
+d_dist <- read_csv("~/Documents/HAQC/data/geometric-graphs.csv")
+d_dist %>% 
+  group_by(radius) %>% 
+  count(connected) %>% 
+  ungroup() %>% 
+  group_by(radius) %>% 
+  mutate(perc = n/sum(n)) %>% 
+  filter(connected) %>% 
+  ggplot(aes(x = radius, y = perc)) + 
+  geom_line() + 
+  theme_minimal()
+
+
+d_dist %>% 
+  group_by(radius) %>% 
+  count(connected) %>% 
+  ungroup() %>% 
+  group_by(radius) %>% 
+  mutate(perc = n/sum(n)) %>% 
+  filter(connected) %>% 
+  View()
