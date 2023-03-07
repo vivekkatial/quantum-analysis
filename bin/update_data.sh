@@ -8,7 +8,7 @@
 
 #export AQC_EXPERIMENT="three-sat-usa-inc-gs"
 # export QAOA_EXPERIMENT="three-sat-usa-qaoa"
-export QAOA_VRP_EXPERIMENT="QAOA-Parameter-layers-vanilla"
+export QAOA_VRP_EXPERIMENT="QAOA-classical-opts"
 
 # Activate venv
 pipenv shell
