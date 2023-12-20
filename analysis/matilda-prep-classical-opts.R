@@ -10,26 +10,47 @@ library(glue)
 
 Sys.time()
 
-RUN_DATETIME <- as.POSIXct("2023-01-23 11:45:00 AEDT", tz = "UTC")
-system_size = 13
+extract_real <- function(x) {
+  # Check if the string contains "+0j"
+  if (!grepl("\\+.*j", x)) {
+    return(as.numeric(x))
+  }
+  
+  # Remove the brackets
+  x <- gsub("\\(|\\)", "", x)
+  # Remove the imaginary part
+  x <- gsub("\\+.*$", "", x)
+  
+  # Convert to numeric
+  x <- as.numeric(x)
+  
+  # Return the result
+  return(x)
+}
+
+RUN_DATETIME <- as.POSIXct("2023-11-23 11:45:00 AEDT", tz = "UTC")
+system_size = 8
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_QAOA-Parameter-layers-vanilla.csv") %>% 
   filter(
-    start_time > RUN_DATETIME
+    start_time > RUN_DATETIME,
+    status == "FINISHED"
   ) %>% 
-  select(Instances = run_id, Source = params.Source, contains("params"), contains("metrics.energy_QAOA_13")) %>% 
-  select(-contains("size_7"), -metrics.energy_QAOA_13_8,-metrics.energy_QAOA_13_9, -metrics.energy_QAOA_13_10)
+  select(Instances = run_id, Source = params.instance_class, contains("params"), contains("metrics")) %>% 
+  # Clean up random complex numbers coming through
+  rowwise() %>% 
+  mutate(across(starts_with("params.") & is.character, extract_real))
+
+
 
 d_matilda <- d_runs %>%
   rename_at(
       vars(starts_with(glue("params."))), 
       list( ~ str_replace(., glue("params."), "feature_"))
     ) %>% 
-    rename_at(
-      vars(starts_with("metrics.energy_QAOA_13")),
-      list(~ str_replace(.,"metrics.energy_QAOA_13" ,"algo_n_layers"))
-    ) %>% 
+  rename("algo_qaoa" = metrics.approximation_ratio,
+         "algo_control" = metrics.analytical_approximation_ratio) %>% 
     mutate_if(is.logical, as.numeric) %>% 
     select_if(~n_distinct(.) > 1) %>% 
     select(-contains("feature_acyclic")) %>% 
@@ -94,12 +115,10 @@ testthat::expect_gt(d_matilda %>%
                       nrow(),
                     1)
 
-d_matilda <- d_matilda[sample(1:nrow(d_matilda)), ]
-
 d_matilda %>% 
+  filter(algo_control > 0) %>% 
   select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
+  janitor::clean_names() %>% 
   write_csv("data/d_matilda.csv")
 
-
-d_matilda %>% slice(120:236)
 

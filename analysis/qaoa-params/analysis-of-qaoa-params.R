@@ -8,6 +8,7 @@
 library(tidyverse)
 library(here)
 library(glue)
+library(latex2exp)
 
 Sys.time()
 
@@ -123,3 +124,55 @@ d_clean_results %>%
 # Fixed Weight Graphs -----------------------------------------------------
 
 
+d_runs %>% 
+  filter(Source == "three_regular_graph", params.n_layers==1) %>% 
+  ggplot(aes(x=metrics.optimal_gamma_1)) + 
+  geom_density() + 
+  facet_wrap(~params.instance_size, ncol = 1)
+
+
+d_runs %>% 
+  count(Source, params.instance_size) %>% 
+  filter(str_detect(Source, "regular"))
+
+d_runs %>% 
+  filter(Source == "uniform_random", params.n_layers==1) %>% 
+  ggplot(aes(x=metrics.optimal_beta_1)) + 
+  geom_density() + 
+  facet_wrap(~params.instance_size, ncol = 1)
+
+
+# INFORMS charts ----------------------------------------------------------
+
+d_runs %>%
+  filter(Source == "three_regular_graph", params.n_layers == 1) %>%
+  ggplot(aes(x = metrics.optimal_beta_1, y = ..density..)) + 
+  geom_histogram(aes(y = ..density..), bins = 20, fill = "grey", color = "black", alpha = 0.5) +
+  geom_density(aes(y = ..density..), color = "black", fill="red", alpha=0.3) +
+  # facet_wrap(~params.instance_size, ncol = 1, scales = "free_y", 
+  #            labeller = labeller(params.instance_size = function(x) paste("System Size:", x, " nodes"))) +
+  theme_minimal() +
+  theme_light() +
+  xlab(TeX("Optimal $\\beta_1$")) + 
+  ylab(TeX("Probability Density"))
+
+
+
+d_runs %>%
+  filter(Source == "three_regular_graph", params.n_layers == 5) %>%
+  select(starts_with("metrics.optimal_")) %>%
+  gather(metric, val) %>%
+  filter(!is.na(val)) %>%
+  mutate(metric = str_replace_all(metric, "metrics.optimal_", ""),
+         metric = str_replace_all(metric, "beta_(\\d+)", "beta[\\1]"),  # Correct regex for beta
+         metric = str_replace_all(metric, "gamma_(\\d+)", "gamma[\\1]")) %>%  # Correct regex for gamma
+  ggplot(aes(x = abs(val))) + 
+  # geom_density(fill="black", alpha=0.2) + 
+  geom_histogram(col="black", fill="red",alpha=0.4) + 
+  # stat_density(geom = 'line', color = "black") +
+  xlim(-pi, pi) +  # Set x-axis limits
+  facet_wrap(~metric, 
+             labeller = labeller(metric = label_parsed), nrow=2) + # Use label_parsed for plotmath
+  theme_light() +
+  xlab(TeX("Optimal Parameters")) +
+  ylab(TeX("Frequency"))

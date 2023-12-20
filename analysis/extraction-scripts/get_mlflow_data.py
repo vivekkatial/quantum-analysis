@@ -40,7 +40,7 @@ def main():
 
     logging.info("Downloading data from Experiment")
     d_results = mlflow.search_runs(
-        experiment_ids=experiment.experiment_id, run_view_type=1,max_results=500
+        experiment_ids=experiment.experiment_id, run_view_type=1,max_results=50000
     )
     d_results_filename = "data/d_%s.csv" % experiment_name
     d_results.to_csv(d_results_filename, index=False)
