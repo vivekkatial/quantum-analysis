@@ -8,7 +8,7 @@
 
 #export AQC_EXPERIMENT="three-sat-usa-inc-gs"
 # export QAOA_EXPERIMENT="three-sat-usa-qaoa"
-export QAOA_VRP_EXPERIMENT="QAOA-Instance-Based-Parameter-Optimization"
+export QAOA_VRP_EXPERIMENT="QAOA-Parameter-layers-vanilla"
 
 pipenv run python analysis/extraction-scripts/get_mlflow_data.py --experiment=$QAOA_VRP_EXPERIMENT
 

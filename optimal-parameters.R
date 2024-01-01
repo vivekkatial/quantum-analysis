@@ -7,6 +7,8 @@
 
 library(tidyverse)
 library(glue)
+library(latex2exp)
+
 
 Sys.time()
 
@@ -64,25 +66,44 @@ d_runs %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis ticks
   labs(title = "# of Nodes", x = "System Size", y = "Count")  # Set title and axis labels
 
-
-d_runs %>%
+# Prepare your data
+prepared_data <- d_runs %>%
   filter(
     params.instance_size == 8,
     params.n_layers == 1
   ) %>%
   mutate(
     Source = str_replace_all(Source, "_", " "),
-    Source = str_to_title(Source)
-    ) %>% 
-  ggplot(aes(x = abs(metrics.optimal_beta_1))) +
-  geom_histogram(col = "black", alpha = 0.4, bins = "30") + 
-  geom_density(fill = "red", alpha=0.2) + 
-  theme_light() +
+    Source = str_to_title(Source),
+    OptimalGamma = abs(metrics.optimal_gamma_1)/pi,
+    OptimalBeta = abs(metrics.optimal_beta_1)/pi
+  ) %>% 
+  select(OptimalGamma, OptimalBeta, Source) %>% 
+  gather(param, val, -Source) %>%
+  mutate(param = ifelse(param == "OptimalGamma", "gamma_star", "beta_star"))
+
+# Calculate medians
+medians <- prepared_data %>%
+  group_by(Source, param) %>%
+  summarize(median_val = median(val))
+
+# Create the plot
+ggplot(prepared_data, aes(x = val, fill = param)) +
+  geom_density(alpha=0.4, aes(y = ..density..)) +
+  geom_vline(data = medians, aes(xintercept = median_val, color = param), linetype = "dashed", show.legend = FALSE) +
+  scale_fill_manual(
+    values = c("gamma_star" = "blue", "beta_star" = "red"), 
+    labels = c(TeX("$\\gamma^*/\pi$"), TeX("$\\beta^*/\pi$"))
+  ) +
+  scale_color_manual(
+    values = c("gamma_star" = "blue", "beta_star" = "red")
+  ) + 
+  theme_classic() +
   facet_wrap(~Source, scales = "free_y") +
   labs(x = "",
-       y = "Frequency") +
-  theme(strip.text = element_text(face = "bold"))
-
+       y = "Density") +
+  theme(strip.text = element_text(face = "bold"), axis.ticks.y = element_blank(), legend.title = element_blank()) + 
+  xlim(c(-0.2, 1))
 
 # Assuming your dataframe is named 'd_runs'
 optimal_parameters_median = d_runs %>%

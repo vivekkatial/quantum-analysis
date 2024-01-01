@@ -10,24 +10,6 @@ library(glue)
 
 Sys.time()
 
-extract_real <- function(x) {
-  # Check if the string contains "+0j"
-  if (!grepl("\\+.*j", x)) {
-    return(as.numeric(x))
-  }
-  
-  # Remove the brackets
-  x <- gsub("\\(|\\)", "", x)
-  # Remove the imaginary part
-  x <- gsub("\\+.*$", "", x)
-  
-  # Convert to numeric
-  x <- as.numeric(x)
-  
-  # Return the result
-  return(x)
-}
-
 RUN_DATETIME <- as.POSIXct("2023-11-23 11:45:00 AEDT", tz = "UTC")
 system_size = 8
 
