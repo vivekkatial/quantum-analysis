@@ -1,8 +1,8 @@
 ###############################################################################
-# Prep stuff for matilda QAOA-Instance-Based-Parameter-Optimization.
+# Create ISA data for Instance Based Opts (with custom performance metric)
 #
 # Author: Vivek Katial
-# Created 2021-04-13 17:16:59
+# Created At: 2024-01-01 20:03:42.62354
 ###############################################################################
 
 library(tidyverse)
@@ -26,6 +26,14 @@ d_runs <- read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization.csv") %>%
     params.instance_size == system_size
   ) %>% 
   select(Instances = run_id, Source = params.instance_class, contains("params"), contains("metric"))
+
+# Get data on runs each algorithm -----------------------------------------
+
+d_runs %>% 
+  head() %>% 
+  mutate(algo_performance = map(Instances, load_instance_maxcut_isa, "QAOA-Instance-Based-Parameter-Optimization"))
+
+
 
 d_matilda <- d_runs %>%
   rename_at(
@@ -124,7 +132,7 @@ testthat::expect_equal(d_matilda %>%
                          nrow(),
                        0,
                        info = "There are feature columns with no variance"
-                       )
+)
 
 # Test that atleast one source
 testthat::expect_gt(d_matilda %>%
@@ -186,7 +194,7 @@ d_runs %>%
   mutate(acceptable_ratio = TRUE) %>% 
   # Create algo fevals (effective function evaluations)
   mutate(algo_x = ifelse(acceptable_ratio == TRUE, metrics.QAOA_three_regular_graph_optimised_num_iterations, big_M))
-  
+
 
 
 
