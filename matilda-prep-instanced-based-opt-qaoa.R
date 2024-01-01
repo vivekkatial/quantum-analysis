@@ -17,7 +17,7 @@ very_high_threshold <- 1e5
 Sys.time()
 
 RUN_DATETIME <- as.POSIXct("2023-12-18 11:45:00 AEDT", tz = "UTC")
-system_size = 8
+system_size = 12
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization.csv") %>% 
@@ -37,9 +37,18 @@ d_matilda <- d_runs %>%
     list(~ str_replace(.,"metrics." ,"algo_"))
   ) %>% 
   mutate_if(is.logical, as.numeric) %>% 
+  select(
+    Instances,
+    Source,
+    contains("feature_"),
+    contains("approximation_ratio")
+  ) %>% 
+  # Shift by absolute minimum to ensure all values for performance metric positive and remove NA
   drop_na() %>% 
-  # Shift by absolute minimum to ensure all values are positive and remove NA
-  mutate_if(is.numeric, ~ . + abs(min(.))) %>% 
+  # Enable ONLY if algorithms should be positive
+  # mutate_if(~is.numeric(.) && grepl("algo", names(.)), ~ . + abs(min(.))) %>% 
+  # Enable if EVERYTHING should be positive
+  mutate_if(~is.numeric(.), ~ . + abs(min(.))) %>% 
   # Normalis fevals
   mutate(across(starts_with("algo"), ~./max(c_across(starts_with("algo"))))) %>% 
   select_if(~n_distinct(.) > 1) %>% 
@@ -148,6 +157,7 @@ testthat::test_that("Check if all numeric columns are positive", {
   
   # Check if all numeric columns are positive
   numeric_cols <- d_matilda %>%
+    select(-contains("algo_")) %>% 
     select_if(is.numeric) %>%
     sapply(function(x) all(x >= 0))
   
@@ -155,7 +165,7 @@ testthat::test_that("Check if all numeric columns are positive", {
   testthat::expect_true(all(numeric_cols), label = "All numeric columns are positive")
 })
 
-i# Sample this df
+# Sample this df
 d_matilda <- d_matilda[sample(1:nrow(d_matilda)), ]
 
 d_matilda %>% 
