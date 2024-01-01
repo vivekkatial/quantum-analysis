@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "quantum-analysis"
+version = "0.1.0"
+description = "Quantum Analysis stuff for MATILDA"
+authors = ["Vivek Katial <vivekkatial@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+ipykernel = "^6.28.0"
+numpy = "^1.26.2"
+networkx = "^3.2.1"
+matplotlib = "^3.8.2"
+pandas = "^2.1.4"
+python-louvain = "^0.16"
+ipython = "^8.19.0"
+prompt-toolkit = "^3.0.43"
+mlflow = "^2.9.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
