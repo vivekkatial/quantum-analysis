@@ -1,4 +1,5 @@
 Sys.setenv(MLFLOW_VERBOSE=TRUE)
-Sys.setenv(MLFLOW_TRACKING_URI="http://XX.XX.XX.XXX:XXXX")
-Sys.setenv(MLFLOW_BIN="")
-
+Sys.setenv(MLFLOW_TRACKING_URI="http://45.113.235.194:5000/")
+Sys.setenv(MLFLOW_BIN="/Users/vivekkatial/Library/Caches/pypoetry/virtualenvs/quantum-analysis-B8tZJFqe-py3.11/bin/mlflow")
+Sys.setenv(MLFLOW_TRACKING_USERNAME="admin")
+Sys.setenv(MLFLOW_TRACKING_PASSWORD="vivek123")

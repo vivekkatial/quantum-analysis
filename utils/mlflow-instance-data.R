@@ -1,4 +1,4 @@
-load_instance_exact_cover = function(run_id, experiment_name, uri = "http://45.113.235.194:5000/") {
+load_instance_exact_cover = function(run_id, experiment_name, uri) {
   # Connect to MLFlow Server
   mlflow::mlflow_set_tracking_uri(uri = uri)
   # Download Artifacts
@@ -17,11 +17,8 @@ load_instance_exact_cover = function(run_id, experiment_name, uri = "http://45.1
 }
 
 
-load_instance_maxcut_isa = function(run_id, experiment_name, uri = "http://115.146.95.176:5000/") {
-  # Connect to MLFlow Server
-  mlflow::mlflow_set_tracking_uri(uri = uri)
-  
-  mlflow::mlflow_download_artifacts("results.csv", run_id = run_id)
+load_instance_maxcut_isa = function(run_id, experiment_name) {
   browser()
+  mlflow::mlflow_download_artifacts("results.csv", run_id = run_id)
 
 }

@@ -13,43 +13,56 @@ source(here("utils/matilda-utils.R"))
 # Set the threshold values for tiny and very high variance
 tiny_threshold <- 1e-5
 very_high_threshold <- 1e5
-
-Sys.time()
-
-RUN_DATETIME <- as.POSIXct("2023-12-18 11:45:00 AEDT", tz = "UTC")
 system_size = 12
 
 # Adding stuff for QAOA
-d_runs <- read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization.csv") %>% 
-  filter(
-    start_time > RUN_DATETIME,
-    params.instance_size == system_size
-  ) %>% 
-  select(Instances = run_id, Source = params.instance_class, contains("params"), contains("metric"))
+d_runs <- read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization-with-Metrics.csv") %>% 
+  filter(params.instance_size == system_size) %>% 
+  rename(Source = Source...2) %>% 
+  select(run_id, Source, contains("params"), contains("metric"), contains("algo"))
+
+# Fix corrupt runs
+d_corrupt_runs <- read_csv("data/corrupt-runs-with-Metrics.csv") %>% 
+  # Filter only runs that dont have `NA` values
+  filter_all(all_vars(!is.na(.)))
+
+d_runs_combined <- left_join(d_runs, d_corrupt_runs, by = "run_id", suffix = c("_df1", "_df2"))
+
+# Get the names of columns that have a '_df1' suffix
+cols_df1 <- names(d_runs_combined)[str_detect(names(d_runs_combined), "_df1$")]
+
+# Remove the '_df1' suffix to get the base column names
+base_cols <- str_replace(cols_df1, "_df1$", "")
+
+# Apply coalesce to each pair of columns
+final_df <- d_runs_combined
+for (col in base_cols) {
+  col_df1 <- paste0(col, "_df1")
+  col_df2 = paste0(col, "_df2")
+  final_df <- final_df %>%
+    mutate(!!sym(col) := coalesce(!!sym(col_df1), !!sym(col_df2)))
+}
+
+# Select only the original column names (without suffixes)
+final_df <- final_df %>%
+  select(-ends_with("_df2"), -ends_with("_df1")) %>% 
+  filter(if_all(starts_with("algo_"), ~ !is.na(.))) %>% 
+  filter(!params.is_distance_regular) %>% 
+  rename(Instances = run_id)
 
 # Get data on runs each algorithm -----------------------------------------
 
-d_runs %>% 
-  head() %>% 
-  mutate(algo_performance = map(Instances, load_instance_maxcut_isa, "QAOA-Instance-Based-Parameter-Optimization"))
-
-
-
-d_matilda <- d_runs %>%
+d_matilda <- final_df %>%
   rename_at(
     vars(starts_with(glue("params."))), 
     list( ~ str_replace(., glue("params."), "feature_"))
-  ) %>% 
-  rename_at(
-    vars(contains("metrics.")),
-    list(~ str_replace(.,"metrics." ,"algo_"))
   ) %>% 
   mutate_if(is.logical, as.numeric) %>% 
   select(
     Instances,
     Source,
     contains("feature_"),
-    contains("approximation_ratio")
+    base_cols[2:length(base_cols)]
   ) %>% 
   # Shift by absolute minimum to ensure all values for performance metric positive and remove NA
   drop_na() %>% 
@@ -58,12 +71,10 @@ d_matilda <- d_runs %>%
   # Enable if EVERYTHING should be positive
   mutate_if(~is.numeric(.), ~ . + abs(min(.))) %>% 
   # Normalis fevals
-  mutate(across(starts_with("algo"), ~./max(c_across(starts_with("algo"))))) %>% 
   select_if(~n_distinct(.) > 1) %>% 
   select(-contains("feature_acyclic")) %>% 
   select(-contains("feature_number_of_vertices")) %>%
-  # Remove columns with very tiny, very high, and NaN value in variance
-  select(-feature_group_size, -feature_smallest_eigenvalue) %>% 
+  # Remove columns with very tiny, very high, and NaN value in varianc
   select(Instances, Source,starts_with("feature"),starts_with("algo"))
 
 
@@ -180,22 +191,3 @@ d_matilda %>%
   select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
   mutate(Instances = glue("{Instances}_{Source}")) %>% 
   write_csv("data/d_matilda.csv")
-
-
-# Calculate improved performance measure ----------------------------------
-
-big_M = 1e7
-
-d_runs %>% 
-  select(Instances, Source, contains("approximation"), contains("num_iterations")) %>% 
-  # Create column for maximum across all 3 approximation
-  mutate(maximum_ratio = max(across(contains("approximation")))) %>% 
-  # Create three columns for if 95% of maximum_ratio
-  mutate(acceptable_ratio = TRUE) %>% 
-  # Create algo fevals (effective function evaluations)
-  mutate(algo_x = ifelse(acceptable_ratio == TRUE, metrics.QAOA_three_regular_graph_optimised_num_iterations, big_M))
-
-
-
-
-

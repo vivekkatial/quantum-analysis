@@ -41,3 +41,6 @@ vignettes/*.pdf
 data/
 *.log
 *.tex
+.Rprofile
+.env
+temp_artifacts/
