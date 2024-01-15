@@ -4,64 +4,43 @@
 # Author: Vivek Katial
 # Created 2021-09-16 18:01:47
 ###############################################################################
-
 library(tidyverse)
+library(latex2exp)
 
-d_offset_low <- read_csv("../HAQC/data/results.csv")
-d_offset_high <- read_csv("../HAQC/data/results_large_offset.csv")
-
-d_offset_low %>% 
-  group_by(optimizer) %>% 
-  mutate(restart = ifelse(n_eval==1, total_evals, F)) %>% 
-  ggplot(aes(x = total_evals, y = value)) + 
-  geom_line(size = 0.3, color = "navy") + # , color = "#800000") + 
-  geom_vline(aes(xintercept = restart), linetype="dashed", size=0.15) + 
-  geom_vline(xintercept = 500, color = "black", size = 0.75) +
-  geom_hline(yintercept = -18.2, color="maroon") + 
-  facet_wrap(~optimizer, ncol = 1) + 
-  theme_minimal() + 
-  labs(
-    x = "Function Evaluations",
-    y = "Energy"
-  )
-
-
-d_offset_high %>% 
-  group_by(optimizer) %>% 
-  mutate(restart = ifelse(n_eval==1, total_evals, F)) %>% 
-  filter(total_evals<1000) %>% 
-  ggplot(aes(x = total_evals, y = value)) + 
-  geom_line(size = 0.3, color = "navy") + # , color = "#800000") + 
-  geom_vline(aes(xintercept = restart), linetype="dashed", size=0.15) + 
-  geom_vline(xintercept = 1000, color = "black", size = 0.75) +
-  geom_hline(yintercept = -180, color="maroon") + 
-  facet_wrap(~optimizer, ncol = 1) + 
-  theme_minimal() + 
-  labs(
-    x = "Function Evaluations",
-    y = "Energy"
-  )
-
-d_offset_high %>% 
-  group_by(optimizer) %>% 
-  summarise(
-    min_energy_high_offset = min(value),
-    gap_high_offset = 1-min(value)/-180
+plot <- d_runs %>% 
+  select(
+    "Random Initialisation" = metrics.QAOA_random_initialisation_approximation_ratio,
+    "Trotterised Quantum Annealing" = metrics.QAOA_tqa_initialisation_approximation_ratio,
+    "Instance Class Optimised" = metrics.QAOA_instance_class_optimsed_approximation_ratio,
+    "Three Regular Graph Optimised" = metrics.QAOA_three_regular_graph_optimised_approximation_ratio
     ) %>% 
-  arrange(gap_high_offset) %>% 
-  left_join(
-    d_offset_low %>% 
-      group_by(optimizer) %>% 
-      summarise(
-        min_energy = min(value),
-        gap = 1-min(value)/-18.6
-      ) %>% 
-      arrange(gap)
-  ) %>% 
-  rename(
-    min_energy_low_offset = min_energy,
-    gap_low_offset = gap
-  )
+  gather(key, val) %>% 
+  ggplot(aes(x = val, col = key , fill = key)) + 
+  geom_density(alpha = 0.1) + 
+  theme_classic() + 
+  geom_vline(xintercept = 0.7156, linetype="dashed") + 
+  annotate("text", x = 0.8, y=8, label = TeX("$\\alpha$=0.7156")) + 
+  labs(
+    x = TeX("Approximation Ratio      $\\alpha$"),
+    y = ""
+  ) + 
+  scale_color_manual(values = c(
+    "#832A8C", "#EDB432", "#DD5724", "#0E6FBB" 
+  )) + 
+  scale_fill_manual(
+    values = c(
+      "#832A8C", "#EDB432", "#DD5724", "#0E6FBB" 
+  )) + 
+  theme(
+    axis.text.y=element_blank(), 
+    axis.ticks.y=element_blank(),
+    legend.title = element_blank(),
+    legend.position=c(.14,.88)
+  ) 
+  
+
+plot
 
 
 
+ggsave("approximation-ratio-by-each-initialisation-histograms.png", plot, width = 10, height = 6, dpi = 300)

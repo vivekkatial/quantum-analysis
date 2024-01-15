@@ -190,4 +190,7 @@ d_matilda <- d_matilda[sample(1:nrow(d_matilda)), ]
 d_matilda %>% 
   select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
   mutate(Instances = glue("{Instances}_{Source}")) %>% 
+  # Clean up source name to be tidy
+  mutate(Source = stringr::str_to_title(str_replace_all(Source, "_", " "))) %>% 
   write_csv("data/d_matilda.csv")
+
