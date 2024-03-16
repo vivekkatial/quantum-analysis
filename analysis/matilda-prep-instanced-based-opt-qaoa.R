@@ -192,5 +192,5 @@ d_matilda %>%
   mutate(Instances = glue("{Instances}_{Source}")) %>% 
   # Clean up source name to be tidy
   mutate(Source = stringr::str_to_title(str_replace_all(Source, "_", " "))) %>% 
-  write_csv("data/d_matilda.csv")
-
+  write_csv("data/d_matilda-instance-based.csv")
+                                                    
