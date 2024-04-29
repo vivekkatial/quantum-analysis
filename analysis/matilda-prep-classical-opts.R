@@ -9,7 +9,9 @@ library(here)
 library(tidyverse)
 library(glue)
 
+
 source(here("utils/matilda-utils.R"))
+source(here("isa-analysis/custom-feature-selection.R"))
 
 Sys.time()
 
@@ -21,6 +23,8 @@ d_runs <- read_csv("data/d_QAOA-Classical-Optimization_all_runs.csv") %>%
     status == "FINISHED"
   ) %>% 
   select(Instances = run_id, Source = params.instance_class, contains("params"), contains("metrics")) %>% 
+  # Filter for instance_size = 12
+  filter(params.instance_size == 12) %>%
   # Clean up random complex numbers coming through
   rowwise() %>% 
   mutate(across(starts_with("params.") & is.character, extract_real))
@@ -46,13 +50,14 @@ d_matilda <- d_runs %>%
          starts_with("algo")) %>% 
   # Remove algorithms that have similar performance or very poor performance
   select(
-    -algo_AQGD,
-    -algo_TNC,
+    -algo_ADAM,
+    -algo_COBYLA,
     -algo_GradientDescent,
     -algo_SPSA,
-    -algo_NFT
+    -algo_TNC,
   )
 
+algos_to_select <- c("CG", "L_BFGS_B", "SLSQP", "NELDER_MEAD", "POWELL")
 
 # Remove cols with no-variance
 cols_to_remove <- d_matilda %>% 
@@ -160,10 +165,62 @@ testthat::expect_gt(d_matilda %>%
 # Sample this df
 d_matilda <- d_matilda[sample(1:nrow(d_matilda)), ]
 
+# Features to log transform
+features_to_log <- c(
+  "feature_algebraic_connectivity",
+  "feature_average_distance",
+  "feature_clique_number",
+  "feature_diameter",
+  "feature_edge_connectivity",
+  "feature_group_size",
+  "feature_laplacian_largest_eigenvalue",
+  "feature_laplacian_second_largest_eigenvalue",
+  "feature_minimum_dominating_set",
+  "feature_number_of_cut_vertices",
+  "feature_number_of_edges",
+  "feature_number_of_minimal_odd_cycles",
+  "feature_number_of_orbits",
+  "feature_ratio_of_two_largest_laplacian_eigenvaleus",
+  "feature_vertex_connectivity"
+)
+
+# Features to remove
+features_to_remove <- c(
+ "feature_connected",
+ "feature_number_of_components"
+)
+
+
 d_matilda %>% 
-  select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
-#   mutate(Instances = glue("{Instances}_{Source}")) %>% 
+  select(starts_with("feature"), algo_SLSQP, algo_L_BFGS_B) %>% 
+  # Flatten to have a column for algo and a column for feature
+  pivot_longer(cols = -c(algo_SLSQP, algo_L_BFGS_B), names_to = "feature", values_to = "value") %>% 
+  gather(-feature, -value, key=algo, val=feval) %>% 
+  select(feature, algo, feat_value = value, algo_value = feval) %>% 
+  ggplot(aes(x = feat_value, y = log(algo_value), col = algo)) +
+  geom_point(alpha = 0.3) +
+  facet_wrap( ~ feature, scale = "free")
+
+
+
+d_matilda %>%
+  # Get rid of features to remove
+  select(-one_of(features_to_remove)) %>%
+  # Filter out outliers
+  filter(!if_any(starts_with("feature"), ~is_outlier(., .01, .99))) %>%
+  # select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
+  # filter(!if_any(starts_with("algo"), ~. == 1e5)) %>%
+  # log algos
+  # mutate(across(starts_with("algo"), ~log(.))) %>%
+  # Fix to a single instance size
+  mutate(Instances = glue("{Instances}_{Source}")) %>% 
   # Clean up source name to be tidy
   mutate(Source = stringr::str_to_title(str_replace_all(Source, "_", " "))) %>% 
   write_csv("data/d_matilda_classical_opts.csv")
 
+# Better estimation of penalty --------------------------------------------
+
+d_matilda %>% 
+  # create new column for each algo, if algo_X = 1e5 then set to 1 else 0
+  mutate(across(starts_with("algo"), ~if_else(. == 1e5, 1, 0))) %>%
+  select(starts_with("algo"))

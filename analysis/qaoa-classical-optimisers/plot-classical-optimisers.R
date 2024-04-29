@@ -15,13 +15,7 @@ source(here("utils/ggplot_theme_Publication-2.R"))
 df <- read_csv("data/d_QAOA-Classical-Optimization_all_runs.csv")
 
 # Algorithms to remove from ISA
-algos_to_remove <- c(
-  "AQGD",
-  "TNC",
-  "GradientDescent",
-  "SPSA",
-  "NFT"
-)
+algos_to_select <- c("CG", "L_BFGS_B", "SLSQP", "NELDER_MEAD", "POWELL")
 
 
 # Approximation Ratio -----------------------------------------------------
@@ -36,7 +30,7 @@ df %>%
   rename_all(~str_remove(., "_approximation_ratio")) %>%
   gather(-Source, key = "algo", value = "value") %>%
   filter(value > 0) %>% 
-  mutate(algo_to_remove = ifelse(algo %in% algos_to_remove, "Remove", "Keep")) %>%
+  mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
   ggplot(aes(x = algo, y = value, fill=algo_to_remove)) +
   geom_boxplot() +
   scale_fill_brewer(palette = "Set3") +
@@ -58,9 +52,10 @@ df %>%
   rename_all(~str_remove(., "metrics.QAOA_")) %>% 
   # Remove approximation ratio in col name
   rename_all(~str_remove(., "_approximation_ratio")) %>%
-  gather(-Source, key = "algo", value = "value") %>%
+  gather(-Source, -algos_to_remove, key = "algo", value = "value") %>%
+  mutate(algos_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
   filter(value > 0) %>% 
-  ggplot(aes(x = algo, y = value)) +
+  ggplot(aes(x = algo, y = value, fill=algos_to_remove)) +
   geom_boxplot() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   # Color fill 
@@ -147,8 +142,10 @@ df %>%
   gather(-Source, key = "algo", value = "value") %>%
   filter(value != 1e5) %>% 
   mutate(algo = str_remove(algo, "metrics.algo_")) %>%
-  ggplot(aes(x = algo, y = value)) +
-  geom_boxplot(fill="beige") +
+  mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  ggplot(aes(x = algo, y = value, fill=algo_to_remove)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set3") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   labs(title = "Function Evaluations to achieve 90% of best algorithm",
@@ -186,8 +183,10 @@ df %>%
   # Rename columns wit `metrics.QAOA_` with just their algorithm name
   gather(-Source, key = "algo", value = "value") %>%
   mutate(algo = str_remove(algo, "metrics.algo_")) %>%
-  ggplot(aes(x = algo, y = log10(value))) +
-  geom_boxplot(fill="beige") +
+  mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  ggplot(aes(x = algo, y = log10(value), fill=algo_to_remove)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set3") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   labs(title = "Function Evaluations to achieve 90% of best algorithm",
@@ -215,6 +214,7 @@ df %>%
        y = "log(Function Evaluations)") + 
   coord_flip()
 
+
 # Algorithm Performance including penalty --------------------------------
 
 # Compare all algorithms across all instance Sources
@@ -223,13 +223,15 @@ df %>%
   # Rename columns wit `metrics.QAOA_` with just their algorithm name
   gather(-Source, key = "algo", value = "value") %>%
   mutate(algo = str_remove(algo, "metrics.algo_")) %>%
-  ggplot(aes(x = algo, y = value)) +
-  geom_boxplot(fill="beige") +
+  mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  ggplot(aes(x = algo, y = value, fill=algo_to_remove)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Set3") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   labs(title = "Function Evaluations to achieve 90% of best algorithm",
        x = "Algorithm",
-       y = "log(Function Evaluations)") +
+       y = "Function Evaluations") +
   theme_Publication() +
   theme(axis.text.x = element_text(angle = 50, hjust = 1))
 
@@ -252,3 +254,16 @@ df %>%
        x = "Algorithm",
        y = "log(Function Evaluations)") 
 
+
+d_matilda %>% 
+  select(starts_with("feat")) %>% 
+  # Plot each column distribution and facet
+  gather(var, n) %>%
+  ggplot(aes(x = n)) +
+  geom_histogram(bins = 30, color = "white") +
+  facet_wrap(~var,scales = "free") +
+  theme_minimal()
+  
+  
+  
+  

@@ -58,7 +58,7 @@ def main():
     all_runs = []
 
     # Loop through each instance class and instance sizes (4, 6, 8, 10, 12, 14)
-    for instance_size in [4, 6, 8, 10, 12, 14]:
+    for instance_size in [4, 6, 8, 10, 12]:
         for instance_class in instance_classes:
             runs = mlflow.search_runs(
                 experiment_ids=[experiment.experiment_id],

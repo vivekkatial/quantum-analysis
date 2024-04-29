@@ -17,9 +17,22 @@ system_size = 12
 
 # Adding stuff for QAOA
 d_runs <- read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization-with-Metrics.csv") %>% 
+  # Add new runs
   filter(params.instance_size == system_size) %>% 
   rename(Source = Source...2) %>% 
   select(run_id, Source, contains("params"), contains("metric"), contains("algo"))
+
+# Read in custom runs
+d_custom_runs <- read_csv("data/new-custom-instances-runs-with-Metrics.csv") %>% 
+  filter(params.instance_size == system_size) %>% 
+  # Based on when the runs were added classify as Source = "evolution_1" or "evolution_2"
+  mutate(Source = if_else(
+    start_time < as.POSIXct("2024-04-01 00:00:00 AEDT", tz = "UTC"), "evolution_1", "evolution_2")
+    ) %>%
+  select(run_id, Source, contains("params"), contains("metric"), contains("algo"))
+
+# Combine the runs
+d_runs <- bind_rows(d_runs, d_custom_runs)
 
 # Fix corrupt runs
 d_corrupt_runs <- read_csv("data/corrupt-runs-with-Metrics.csv") %>% 
@@ -50,13 +63,24 @@ final_df <- final_df %>%
   filter(!params.is_distance_regular) %>% 
   rename(Instances = run_id)
 
+# Get cols with NA
+cols_with_na_values = final_df %>%
+  summarise_all(list( ~ sum(is.na(
+    .
+  )))) %>%
+  gather(var, n) %>% 
+  filter(n > 0) %>%
+  pull(var)
+
 # Get data on runs each algorithm -----------------------------------------
 
 d_matilda <- final_df %>%
+  select(-one_of(cols_with_na_values)) %>%
   rename_at(
     vars(starts_with(glue("params."))), 
     list( ~ str_replace(., glue("params."), "feature_"))
   ) %>% 
+  # Remove cols with NA
   mutate_if(is.logical, as.numeric) %>% 
   select(
     Instances,
@@ -189,8 +213,10 @@ d_matilda <- d_matilda[sample(1:nrow(d_matilda)), ]
 
 d_matilda %>% 
   select(Instances, Source, starts_with("feature"), starts_with("algo")) %>% 
+  filter(Source != "custom") %>%
   mutate(Instances = glue("{Instances}_{Source}")) %>% 
   # Clean up source name to be tidy
   mutate(Source = stringr::str_to_title(str_replace_all(Source, "_", " "))) %>% 
-  write_csv("data/d_matilda-instance-based.csv")
+  write_csv("data/d_matilda-instance-based-evo-2.csv")
                                                     
+

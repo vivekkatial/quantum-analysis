@@ -154,7 +154,13 @@ if __name__ == "__main__":
     system_size = 12
 
     # Read the CSV file
-    d_runs = pd.read_csv("data/corrupt-runs.csv")
+    d_runs = pd.read_csv("data/d_QAOA-Instance-Based-Parameter-Optimization_all_runs.csv")
+    
+    # Filter data for custom graph True
+    d_runs = d_runs[d_runs['params.custom_graph'] == True]
+    
+    for col in d_runs.columns:
+        print(col)
 
     # Filter data
     # filtered_d_runs = d_runs[d_runs['params.instance_size'] == system_size]
@@ -169,4 +175,4 @@ if __name__ == "__main__":
     print(d_runs_with_metrics)
 
     # Write the results to a CSV file
-    d_runs_with_metrics.to_csv("data/corrupt-runs-with-Metrics.csv", index=False)
+    d_runs_with_metrics.to_csv("data/new-custom-instances-runs-with-Metrics.csv", index=False)
