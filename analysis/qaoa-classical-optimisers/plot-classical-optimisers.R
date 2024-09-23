@@ -7,6 +7,7 @@
 
 library(tidyverse)
 library(here)
+library(glue)
 library(RColorBrewer)
 
 # Source utils
@@ -29,19 +30,23 @@ df %>%
   # Remove approximation ratio in col name
   rename_all(~str_remove(., "_approximation_ratio")) %>%
   gather(-Source, key = "algo", value = "value") %>%
-  filter(value > 0) %>% 
-  mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
-  ggplot(aes(x = algo, y = value, fill=algo_to_remove)) +
-  geom_boxplot() +
-  scale_fill_brewer(palette = "Set3") +
+  # remove COBYLA, GradientDescent, TNC
+  filter(!(algo %in% c("COBYLA", "GradientDescent", "TNC"))) %>% 
+  filter(value > 0.5) %>% 
+  # mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  ggplot(aes(x = algo, y = value)) + #, fill=algo_to_remove)) +
+  geom_boxplot(fill = "lightblue") +
+  # scale_fill_brewer(palette = "Set3") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
-  labs(title = "Approximation Ratios for QAOA Algorithms",
+  labs(title = "",
        x = "Algorithm",
        y = "Approximation Ratio") + 
   theme_Publication() +
   # Tilt algorithms by 50 degrees
-  theme(axis.text.x = element_text(angle = 50, hjust = 1))
+  theme(axis.text.x = element_text(angle = 50, hjust = 1)) + 
+  # remove legend title
+  theme(legend.title = element_blank())
 
 # Compare all algorithms by instance Sources
 df %>% 
@@ -52,11 +57,13 @@ df %>%
   rename_all(~str_remove(., "metrics.QAOA_")) %>% 
   # Remove approximation ratio in col name
   rename_all(~str_remove(., "_approximation_ratio")) %>%
-  gather(-Source, -algos_to_remove, key = "algo", value = "value") %>%
-  mutate(algos_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  gather(-Source, key = "algo", value = "value") %>%
+  # mutate(algos_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
   filter(value > 0) %>% 
-  ggplot(aes(x = algo, y = value, fill=algos_to_remove)) +
-  geom_boxplot() +
+  filter(value > 0.5) %>% 
+  
+  ggplot(aes(x = algo, y = value)) +
+  geom_boxplot(fill = "lightblue") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   # Color fill 
   scale_fill_brewer(palette = "Set3") +
@@ -65,7 +72,7 @@ df %>%
   facet_wrap(~Source) +
   theme_Publication() +
   theme(axis.text.x = element_text(angle = 50, hjust = 1)) + 
-  labs(title = "Approximation Ratios for QAOA Algorithms",
+  labs(title = "",
        x = "Algorithm",
        y = "Approximation Ratio")
 
@@ -202,6 +209,7 @@ df %>%
   select(Source = params.instance_class, contains("algo_")) %>% 
   # Rename columns wit `metrics.QAOA_` with just their algorithm name
   gather(-Source, key = "algo", value = "value") %>%
+  filter(!(algo %in% c("COBYLA", "GradientDescent", "TNC"))) %>% 
   mutate(algo = str_remove(algo, "metrics.algo_")) %>%
   mutate(Source = str_to_title(str_replace_all(Source, "_", " "))) %>%
   ggplot(aes(x = algo, y = log10(value), fill = Source)) +
@@ -224,6 +232,9 @@ df %>%
   gather(-Source, key = "algo", value = "value") %>%
   mutate(algo = str_remove(algo, "metrics.algo_")) %>%
   mutate(algo_to_remove = ifelse(algo %in% algos_to_select, "Keep", "Remove")) %>%
+  filter(!(algo %in% c("COBYLA", "GradientDescent", "TNC"))) %>% 
+  # filter out value > 100k
+  # filter(value < 1e5) %>%
   ggplot(aes(x = algo, y = value, fill=algo_to_remove)) +
   geom_boxplot() +
   scale_fill_brewer(palette = "Set3") +

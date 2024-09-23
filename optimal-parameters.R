@@ -30,11 +30,11 @@ extract_real <- function(x) {
   return(x)
 }
 
-RUN_DATETIME <- as.POSIXct("2023-11-23 11:45:00 AEDT", tz = "UTC")
+RUN_DATETIME <- as.POSIXct("2024-01-15 11:45:00 AEDT", tz = "UTC")
 system_size = 8
 
 # Adding stuff for QAOA
-d_runs <- read_csv("data/d_QAOA-Parameter-layers-vanilla.csv") %>% 
+d_runs <- read_csv("data/d_QAOA-Number-of-Layers_all_runs.csv") %>% 
   filter(
     start_time > RUN_DATETIME,
     status == "FINISHED"
@@ -123,5 +123,13 @@ optimal_parameters_median = d_runs %>%
   group_by(Source) %>% 
   arrange(params.n_layers)
 
+
+d_runs %>%
+  filter(
+    params.instance_size == 8,
+  ) %>%
+  select(
+    contains("metrics.QAOA_random_initialisation_optimal")
+  )
 optimal_parameters_median %>% 
   write_csv("data/optimal-parameters.csv")

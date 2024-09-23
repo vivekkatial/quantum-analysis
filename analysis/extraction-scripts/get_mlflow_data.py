@@ -58,7 +58,7 @@ def main():
     all_runs = []
 
     # Loop through each instance class and instance sizes (4, 6, 8, 10, 12, 14)
-    for instance_size in [4, 6, 8, 10, 12]:
+    for instance_size in [12]:
         for instance_class in instance_classes:
             runs = mlflow.search_runs(
                 experiment_ids=[experiment.experiment_id],
@@ -72,10 +72,16 @@ def main():
 
     # Concatenate all runs into a single DataFrame, if not empty
     if all_runs:
-        df_results = pd.concat(all_runs, ignore_index=True)
-        df_results_filename = f"data/d_{experiment_name}_all_runs.csv"
-        df_results.to_csv(df_results_filename, index=False)
-        logging.info(f'Writing runs data to "{df_results_filename}"')
+        if len(all_runs) > 1:
+          df_results = pd.concat(all_runs, ignore_index=True)
+          df_results_filename = f"data/d_{experiment_name}_all_runs.csv"
+          df_results.to_csv(df_results_filename, index=False)
+          logging.info(f'Writing runs data to "{df_results_filename}"')
+        else:
+          df_results = pd.concat(all_runs, ignore_index=True)
+          df_results_filename = f"data/d_{experiment_name}_size_{all_runs[0]}.csv"
+          df_results.to_csv(df_results_filename, index=False)
+          logging.info(f'Writing runs data to "{df_results_filename}"')
     else:
         logging.info(f"No runs found for Experiment: {experiment_name}")
 

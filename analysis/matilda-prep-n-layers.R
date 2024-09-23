@@ -22,7 +22,7 @@ d_runs <- read_csv("data/d_QAOA-Number-of-Layers_all_runs.csv") %>%
   ) %>% 
   select(Instances = run_id, Source = params.instance_class, contains("params"), contains("metrics")) %>% 
   # Filter for instance size of 12
-  # filter(params.instance_size == 12) %>%
+  filter(params.instance_size == 12) %>%
   # Clean up random complex numbers coming through
   rowwise() %>% 
   mutate(across(starts_with("params.") & is.character, extract_real))
@@ -158,8 +158,11 @@ d_matilda %>%
   gather(layer, feval) %>%
   # Extract layer number
   mutate(layer = str_extract(layer, "\\d+")) %>%
+  filter(
+    layer %in% c(2,5,10,15,20)
+  ) %>% 
   ggplot(aes(x = reorder(layer, as.numeric(layer)), y = feval)) + 
-  geom_boxplot() + 
+  geom_boxplot(fill = "lightblue") + 
   stat_summary(fun=mean, geom="line", aes(group=1), color="blue") + 
   stat_summary(fun=mean, geom="point", aes(group=1), color="blue", size=3, shape=1, stroke =1) + 
   theme_Publication() + 
@@ -230,12 +233,16 @@ d_clean_data %>%
   # Clean name
   mutate(layer = str_extract(layer, "\\d+")) %>% 
   mutate(layer = str_extract(layer, "\\d+")) %>%
+  filter(ar > 0.5) %>% 
+  filter(
+    layer %in% c(2,5,10,15,20)
+  ) %>% 
   ggplot(aes(x = reorder(layer, as.numeric(layer)), y = ar)) + 
-  geom_boxplot() + 
+  geom_boxplot(fill = "lightblue") + 
   stat_summary(fun=mean, geom="line", aes(group=1), color="blue") + 
   stat_summary(fun=mean, geom="point", aes(group=1), color="blue", size=3, shape=1, stroke =1) + 
   theme_Publication() + 
-  labs(x = "Number of Layers", y = "Approximation Ratio")
+  labs(x = "Number of Layers", y = "Approximation Ratio") 
 
 d_clean_data %>% 
   select(contains("approximation_ratio"), Source) %>% 
@@ -244,8 +251,9 @@ d_clean_data %>%
   mutate(layer = str_extract(layer, "\\d+")) %>% 
   # Remove '_' in Source and make title case
   mutate(Source = str_replace_all(Source, "_", " ") %>% str_to_title) %>%
-  ggplot(aes(x = reorder(layer, as.numeric(layer)), y = ar)) + 
-  geom_boxplot() + 
+  filter(ar > 0.5) %>% 
+  ggplot(aes(x = reorder(layer, as.numeric(layer)), y = ar)) +
+  geom_boxplot(fill = "lightblue") + 
   stat_summary(fun=mean, geom="line", aes(group=1), color="blue") + 
   stat_summary(fun=mean, geom="point", aes(group=1), color="blue", size=3, shape=1, stroke =1) + 
   facet_wrap(~Source, scales="free_y") +
